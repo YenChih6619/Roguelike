@@ -15,7 +15,7 @@ let gameState = {
 
 async function initGame() {
      try {
-          const [c, e] = await Promise.all([fetch('cards.json'), fetch('enemies.json')]);
+          const [c, e] = await Promise.all([fetch('Cards.json'), fetch('enemies.json')]);
           CARD_LIBRARY = await c.json();
           ENEMY_LIBRARY = await e.json();
           generateInitialDeck(10);
