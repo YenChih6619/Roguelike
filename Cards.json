@@ -22,9 +22,24 @@
      },
      "evolve": {
           "name": "進化",
-          "cost": 0,
-          "draw": 2,
+          "cost": 1,
+          "draw": 1,
           "type": "utility",
-          "description": "抽 2 張牌"
+          "description": "抽 1 張牌"
+     },
+     "reinforce": {
+          "name": "變強",
+          "cost": 2,
+          "buff": 1,
+          "type": "ability",
+          "description": "增加 1 攻"
+     },
+     "abate": {
+          "name": "削弱",
+          "cost": 1,
+          "debuff":1,
+          "type": "utility",
+          "description": "減少 1 攻"
      }
+
 }

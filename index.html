@@ -3,16 +3,13 @@
 <head>
      <meta charset="UTF-8">
      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-     <title>卡牌冒險者：動畫加強版</title>
+     <title>卡牌冒險者：即時數值版</title>
      <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
      <div id="game-container">
-          <div id="log">初始化冒險...</div>
-
+          <div id="log">初始化中...</div>
           <div id="central-log"></div>
-
           <div id="battle-scene">
                <div class="unit" id="enemy">
                     <div class="unit-info">
@@ -28,37 +25,31 @@
                          </div>
                     </div>
                </div>
-
                <div class="unit" id="player">
                     <div class="avatar">🧙‍♂️</div>
                     <div class="stats">
                          <div class="hp-bar-bg"><div id="player-hp" class="hp-bar-fill"></div></div>
                          <div class="stats-row">
                               <span>HP: <span id="player-hp-text">50/50</span></span>
+                              <span id="player-buff" class="buff-counter">⚔️ +0</span>
                               <span id="player-block" class="block-counter">🛡️ 0</span>
                          </div>
                     </div>
                </div>
           </div>
-
           <div id="ui-overlay">
-               <div id="energy-display">🔋 能量: <span id="energy-value">3</span> / 3</div>
+               <div id="energy-display">🔋 <span id="energy-value">3</span> / 3</div>
                <button id="end-turn-btn">結束回合</button>
           </div>
-
-          <div id="hand-wrapper">
-               <div id="hand"></div>
-          </div>
-
+          <div id="hand-wrapper"><div id="hand"></div></div>
           <div id="reward-modal" class="hidden">
                <div class="reward-content">
-                    <h3>戰鬥勝利！請選牌</h3>
+                    <h3>戰鬥勝利！選一張卡</h3>
                     <div id="reward-options"></div>
                     <button id="skip-reward-btn">跳過</button>
                </div>
           </div>
      </div>
-
      <script src="game.js"></script>
 </body>
 </html>

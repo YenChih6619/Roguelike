@@ -1,6 +1,8 @@
-﻿* {
+﻿/* --- 基礎設定與手機適配 --- */
+* {
      box-sizing: border-box;
-     -webkit-tap-highlight-color: transparent;
+     -webkit-tap-highlight-color: transparent; /* 移除手機點擊藍框 */
+     user-select: none; /* 防止玩遊戲時誤觸選取文字 */
 }
 
 body {
@@ -11,32 +13,34 @@ body {
      display: flex;
      justify-content: center;
      overflow: hidden;
-     font-family: sans-serif;
+     font-family: 'Segoe UI', "Microsoft JhengHei", sans-serif;
 }
 
 #game-container {
      width: 100%;
-     max-width: 500px;
+     max-width: 500px; /* 模擬手機寬度 */
      height: 100vh;
      background: radial-gradient(circle at center, #1a1c2c 0%, #0d0e14 100%);
      position: relative;
      display: flex;
      flex-direction: column;
+     box-shadow: 0 0 50px rgba(0,0,0,0.5);
 }
 
-/* --- 動畫訊息 --- */
+/* --- 中央動畫訊息 (能量不足、進化、回合切換) --- */
 #central-log {
      position: absolute;
      top: 40%;
      left: 50%;
      transform: translate(-50%, -50%);
-     font-size: 2.5rem;
+     font-size: 2.2rem;
      font-weight: 900;
      color: #f1c40f;
-     text-shadow: 0 0 15px rgba(0,0,0,0.8);
+     text-shadow: 0 0 15px rgba(0,0,0,0.9);
      z-index: 2000;
      pointer-events: none;
      opacity: 0;
+     white-space: nowrap;
 }
 
 .fade-in-out {
@@ -68,7 +72,7 @@ body {
      }
 }
 
-/* --- 戰鬥舞台 --- */
+/* --- 戰鬥舞台 (上下排列) --- */
 #battle-scene {
      flex: 1;
      display: flex;
@@ -85,6 +89,7 @@ body {
      align-items: center;
      gap: 15px;
      transition: 0.3s;
+     position: relative;
 }
 
 #enemy {
@@ -101,14 +106,19 @@ body {
      filter: drop-shadow(0 5px 10px #000);
 }
 
-.stats {
+.unit-info {
      flex: 1;
+     text-align: left;
+}
+
+#enemy .unit-info {
+     text-align: right;
 }
 
 .unit-name {
      font-weight: bold;
      color: #f1c40f;
-     margin-bottom: 5px;
+     margin-bottom: 2px;
 }
 
 .intent {
@@ -117,6 +127,7 @@ body {
      font-weight: bold;
 }
 
+/* 血條系統 */
 .hp-bar-bg {
      width: 100%;
      height: 12px;
@@ -174,7 +185,7 @@ body {
 
 @keyframes lunge {
      50% {
-          transform: scale(1.1) translateY(-10px);
+          transform: scale(1.1) translateY(-15px);
      }
 }
 
@@ -196,11 +207,11 @@ body {
 
      100% {
           opacity: 0;
-          transform: translateY(-80px);
+          transform: translateY(-100px);
      }
 }
 
-/* --- 手牌與 UI --- */
+/* --- 控制 UI 與能量 --- */
 #ui-overlay {
      height: 60px;
      background: #000;
@@ -208,6 +219,7 @@ body {
      justify-content: space-between;
      align-items: center;
      padding: 0 25px;
+     border-top: 1px solid #333;
 }
 
 #energy-display {
@@ -223,50 +235,72 @@ body {
      padding: 8px 20px;
      border-radius: 8px;
      font-weight: bold;
+     box-shadow: 0 3px 0 #a35d1a;
 }
 
+     #end-turn-btn:active {
+          transform: translateY(2px);
+          box-shadow: none;
+     }
+
+/* --- 手牌區 (可滑動) --- */
 #hand-wrapper {
      height: 180px;
      overflow-x: auto;
-     background: rgba(0,0,0,0.3);
+     background: rgba(0,0,0,0.4);
      display: flex;
      align-items: center;
+     scrollbar-width: none; /* 隱藏捲軸 */
 }
+
+     #hand-wrapper::-webkit-scrollbar {
+          display: none;
+     }
 
 #hand {
      display: flex;
      gap: 12px;
-     padding: 0 20px;
+     padding: 0 25px;
 }
 
+/* --- 卡牌基礎樣式 --- */
 .card {
-     min-width: 110px;
-     height: 150px;
+     min-width: 115px;
+     height: 155px;
      background: #fff;
      color: #333;
      border-radius: 12px;
-     padding: 10px;
+     padding: 12px;
      display: flex;
      flex-direction: column;
      justify-content: space-between;
-     box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+     box-shadow: 0 6px 12px rgba(0,0,0,0.5);
      font-size: 0.85rem;
      position: relative;
+     border: 2px solid transparent;
 }
 
+/* 實時更新的 Buff 文字顏色 */
+.buff-text {
+     color: #d63031;
+     font-weight: bold;
+}
+
+/* 能力牌 (Ability) 特殊樣式 */
+.card[data-type="ability"] {
+     background: #fdf0ff;
+     border: 3px solid #9b59b6;
+}
+
+/* 卡牌行動動畫 */
 .card-draw {
      animation: cardIn 0.4s ease-out;
 }
 
 @keyframes cardIn {
      from {
-          transform: translateY(100px);
+          transform: translateY(120px);
           opacity: 0;
-     }
-
-     to {
-          transform: translateY(0);
-          opacity: 1;
      }
 }
 
@@ -276,15 +310,15 @@ body {
 
 @keyframes cardOut {
      to {
-          transform: translateY(-150px) scale(1.2);
+          transform: translateY(-200px) scale(1.3);
           opacity: 0;
      }
 }
 
 .card strong {
-     border-bottom: 1px solid #ddd;
+     border-bottom: 1px solid #eee;
      padding-bottom: 5px;
-     font-size: 0.9rem;
+     font-size: 0.95rem;
 }
 
 .card b {
@@ -293,12 +327,13 @@ body {
      font-size: 1.1rem;
 }
 
+/* --- 獎勵與日誌 --- */
 #log {
      position: absolute;
      top: 10px;
      left: 10px;
-     font-size: 0.75rem;
-     color: #777;
+     font-size: 0.7rem;
+     color: #666;
      z-index: 10;
 }
 
@@ -306,11 +341,10 @@ body {
      display: none !important;
 }
 
-/* 獎勵彈窗 */
 #reward-modal {
      position: absolute;
      inset: 0;
-     background: rgba(0,0,0,0.9);
+     background: rgba(0,0,0,0.92);
      z-index: 4000;
      display: flex;
      justify-content: center;
@@ -320,19 +354,45 @@ body {
 .reward-content {
      text-align: center;
      width: 90%;
+     color: white;
 }
 
 #reward-options {
      display: flex;
      flex-direction: column;
-     gap: 10px;
+     gap: 15px;
      align-items: center;
-     margin: 20px 0;
+     margin: 30px 0;
 }
 
+     /* 獎勵中的卡片橫向排列或放大 */
      #reward-options .card {
           flex-direction: row;
           width: 90%;
-          min-height: 70px;
+          height: 80px;
+          min-height: 80px;
           align-items: center;
      }
+
+.buff-counter {
+     color: #ff7675; /* 淺紅色 */
+     font-weight: bold;
+     margin-right: 8px;
+     text-shadow: 0 0 5px rgba(255, 118, 117, 0.3);
+}
+
+/* 當數值大於 0 時可以加個呼吸燈動畫（選配） */
+.buff-active {
+     animation: buffGlow 1.5s infinite alternate;
+}
+
+@keyframes buffGlow {
+     from {
+          opacity: 0.8;
+     }
+
+     to {
+          opacity: 1;
+          transform: scale(1.1);
+     }
+}
