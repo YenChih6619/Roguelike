@@ -1,0 +1,30 @@
+{
+     "strike": {
+          "name": "斬擊",
+          "cost": 1,
+          "damage": 6,
+          "type": "attack",
+          "description": "造成 6 點傷害"
+     },
+     "defend": {
+          "name": "防禦",
+          "cost": 1,
+          "block": 5,
+          "type": "defense",
+          "description": "獲得 5 點格擋"
+     },
+     "bash": {
+          "name": "重擊",
+          "cost": 2,
+          "damage": 10,
+          "type": "attack",
+          "description": "造成 10 點傷害"
+     },
+     "evolve": {
+          "name": "進化",
+          "cost": 0,
+          "draw": 2,
+          "type": "utility",
+          "description": "抽 2 張牌"
+     }
+}

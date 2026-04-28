@@ -1,0 +1,46 @@
+﻿{
+     "slime_small": {
+          "name": "小史萊姆",
+          "maxHp": 30,
+          "avatar": "🟢",
+          "actions": [
+               {
+                    "type": "attack",
+                    "value": 5,
+                    "icon": "⚔️",
+                    "description": "衝撞"
+               },
+               {
+                    "type": "defend",
+                    "value": 4,
+                    "icon": "🛡️",
+                    "description": "縮成一團"
+               }
+          ]
+     },
+     "iron_guardian": {
+          "name": "鋼鐵衛士",
+          "maxHp": 80,
+          "avatar": "🤖",
+          "actions": [
+               {
+                    "type": "attack",
+                    "value": 12,
+                    "icon": "⚔️",
+                    "description": "強力重擊"
+               },
+               {
+                    "type": "defend",
+                    "value": 10,
+                    "icon": "🛡️",
+                    "description": "裝甲加固"
+               },
+               {
+                    "type": "buff",
+                    "value": 2,
+                    "icon": "🔥",
+                    "description": "過載模式"
+               }
+          ]
+     }
+}

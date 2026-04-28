@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>卡牌冒險者：Rogue-like 試煉</title>
+     <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+     <div id="game-container">
+          <div id="log">冒險準備中...</div>
+
+          <div id="central-log"></div>
+
+          <div id="battle-scene">
+               <div class="unit" id="enemy">
+                    <div id="enemy-name" class="unit-name">等待對手中...</div>
+                    <div class="intent" id="enemy-intent">偵查中...</div>
+                    <div class="avatar">❓</div>
+                    <div class="stats">
+                         <div class="hp-bar-bg">
+                              <div id="enemy-hp" class="hp-bar-fill"></div>
+                         </div>
+                         <p>HP: <span id="enemy-hp-text">--/--</span></p>
+                         <div id="enemy-block" class="block-counter">🛡️ 0</div>
+                    </div>
+               </div>
+
+               <div class="unit" id="player">
+                    <div class="unit-name">冒險者</div>
+                    <div class="avatar">🧙‍♂️</div>
+                    <div class="stats">
+                         <div class="hp-bar-bg">
+                              <div id="player-hp" class="hp-bar-fill"></div>
+                         </div>
+                         <p>HP: <span id="player-hp-text">50/50</span></p>
+                         <div id="player-block" class="block-counter">🛡️ 0</div>
+                    </div>
+               </div>
+          </div>
+
+          <div id="ui-overlay">
+               <div id="energy-display">🔋 能量: <span id="energy-value">3</span> / 3</div>
+               <button id="end-turn-btn">結束回合</button>
+          </div>
+
+          <div id="hand"></div>
+
+          <div id="reward-modal" class="hidden">
+               <div class="reward-content">
+                    <h2>戰鬥勝利！</h2>
+                    <p>選擇一張卡牌加入永久牌組</p>
+                    <div id="reward-options"></div>
+                    <button id="skip-reward-btn">跳過獎勵</button>
+               </div>
+          </div>
+     </div>
+
+     <script src="game.js"></script>
+</body>
+</html>
