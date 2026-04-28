@@ -7,9 +7,6 @@ let gameState = {
      isPlayerTurn: true, battleCount: 0, handLimit: 10
 };
 
-/**
- * 初始化遊戲
- */
 async function initGame() {
      try {
           const [c, e] = await Promise.all([
@@ -19,7 +16,7 @@ async function initGame() {
           CARD_LIBRARY = c;
           ENEMY_LIBRARY = e;
 
-          generateInitialDeck(8);
+          generateInitialDeck();
           setupEventListeners();
           showCentralMessage("開始冒險");
           nextBattle();
@@ -35,8 +32,53 @@ function setupEventListeners() {
 }
 
 /**
- * 核心：執行卡牌效果
- * 解決「加攻後傷害沒變」的問題
+ * 特定起始牌組設定
+ */
+function generateInitialDeck() {
+     const startingCards = [
+          'strike', 'strike', 'strike', 'strike', 'strike',
+          'defend', 'defend', 'defend', 'defend', 'defend',
+          'abate', 'reinforce',
+          'evolve', 'evolve'
+     ];
+     gameState.deck = [...startingCards];
+}
+
+/**
+ * 核心抽牌邏輯：從抽牌堆拿一張牌，若沒牌則洗牌
+ */
+function drawOneCard() {
+     if (gameState.drawPile.length === 0) {
+          if (gameState.discardPile.length === 0) return false; // 全都沒牌了
+
+          // 洗牌：棄牌堆 -> 抽牌堆
+          gameState.drawPile = [...gameState.discardPile];
+          gameState.discardPile = [];
+          shuffle(gameState.drawPile);
+          showCentralMessage("重新洗牌");
+     }
+
+     if (gameState.hand.length < gameState.handLimit) {
+          const card = gameState.drawPile.pop();
+          gameState.hand.push(card);
+          updateUI();
+          return true;
+     }
+     return false;
+}
+
+/**
+ * 批次抽牌 (用於回合開始)
+ */
+function drawCards(n) {
+     for (let i = 0; i < n; i++) {
+          if (!drawOneCard()) break;
+     }
+     renderHand();
+}
+
+/**
+ * 執行卡牌效果
  */
 function executeCardEffect(i) {
      const key = gameState.hand[i];
@@ -44,37 +86,36 @@ function executeCardEffect(i) {
 
      if (gameState.player.energy < data.cost) return;
 
-     // 扣除能量
      gameState.player.energy -= data.cost;
 
-     // --- 關鍵修正：必須先判定 Ability 並更新 Buff ---
+     // 處理效果
      if (data.type === 'ability') {
-          if (data.buff) {
-               gameState.player.attackBuff += data.buff;
-               showCentralMessage(`力量提升！+${data.buff}`);
-          }
-     }
-
-     // --- 接著再處理傷害與防禦 ---
-     if (data.type === 'attack') {
-          // 這裡會正確抓到剛剛才加進去的 attackBuff
+          if (data.buff) gameState.player.attackBuff += data.buff;
+          showCentralMessage(`${data.name}！`);
+     } else if (data.type === 'attack') {
           const totalDamage = data.damage + gameState.player.attackBuff;
           processDamage(gameState.enemy, totalDamage);
      } else if (data.type === 'defense') {
           gameState.player.block += data.block;
      } else if (data.type === 'utility') {
           if (data.debuff) gameState.enemy.tempDebuff = (gameState.enemy.tempDebuff || 0) + data.debuff;
-          showCentralMessage(`削弱敵人！`);
+          showCentralMessage(`${data.name}！`);
      }
 
-     // 處理手牌去向
+     // --- 【關鍵：處理額外抽牌效果】 ---
+     // 假設卡牌 JSON 中有 draw 屬性，例如 { "name": "進化", "draw": 1 ... }
+     if (data.draw && data.draw > 0) {
+          for (let j = 0; j < data.draw; j++) {
+               drawOneCard();
+          }
+     }
+
+     // 移動卡牌位置
      gameState.hand.splice(i, 1);
      if (data.type !== 'ability') {
           gameState.discardPile.push(key);
      }
 
-     // --- 關鍵修正：立即重新渲染手牌 ---
-     // 這樣下一張攻擊牌的描述才會立刻反映出最新的 Buff 狀態
      renderHand();
      updateUI();
 
@@ -84,16 +125,26 @@ function executeCardEffect(i) {
      }
 }
 
-/**
- * 處理傷害與護甲
- */
+function playCardWithAnim(i, el) {
+     if (!gameState.isPlayerTurn) return;
+     const cardData = CARD_LIBRARY[gameState.hand[i]];
+
+     if (gameState.player.energy >= cardData.cost) {
+          el.classList.add('card-play');
+          setTimeout(() => executeCardEffect(i), 250);
+     } else {
+          showCentralMessage("能量不足！");
+     }
+}
+
 function processDamage(target, amount) {
-     const targetEl = target === gameState.player ? document.getElementById('player') : document.getElementById('enemy');
+     const isPlayer = (target === gameState.player);
+     const targetEl = document.getElementById(isPlayer ? 'player' : 'enemy');
 
-     // 受傷動畫
-     targetEl.classList.remove('unit-hurt'); void targetEl.offsetWidth; targetEl.classList.add('unit-hurt');
+     targetEl.classList.remove('unit-hurt');
+     void targetEl.offsetWidth;
+     targetEl.classList.add('unit-hurt');
 
-     // 數字彈出
      const rect = targetEl.getBoundingClientRect();
      const popup = document.createElement('div');
      popup.className = 'damage-popup';
@@ -103,7 +154,6 @@ function processDamage(target, amount) {
      document.body.appendChild(popup);
      setTimeout(() => popup.remove(), 800);
 
-     // 護甲抵扣邏輯
      if (target.block >= amount) {
           target.block -= amount;
      } else {
@@ -114,9 +164,29 @@ function processDamage(target, amount) {
      updateUI();
 }
 
-/**
- * 渲染手牌 (含即時傷害計算顯示)
- */
+function updateUI() {
+     const p = gameState.player, e = gameState.enemy;
+
+     document.getElementById('player-hp').style.width = (p.hp / p.maxHp * 100) + '%';
+     document.getElementById('player-hp-text').innerText = `${p.hp}/${p.maxHp}`;
+     document.getElementById('player-block').innerText = `🛡️ ${p.block}`;
+
+     const buffEl = document.getElementById('player-buff');
+     buffEl.innerText = `⚔️ +${p.attackBuff}`;
+     p.attackBuff > 0 ? buffEl.classList.add('buff-active') : buffEl.classList.remove('buff-active');
+
+     document.getElementById('draw-count').innerText = gameState.drawPile.length;
+     document.getElementById('discard-count').innerText = gameState.discardPile.length;
+
+     document.getElementById('energy-value').innerText = p.energy;
+
+     if (e) {
+          document.getElementById('enemy-hp').style.width = (e.hp / e.maxHp * 100) + '%';
+          document.getElementById('enemy-hp-text').innerText = `${Math.floor(e.hp)}/${e.maxHp}`;
+          document.getElementById('enemy-block').innerText = `🛡️ ${e.block}`;
+     }
+}
+
 function renderHand() {
      const container = document.getElementById('hand');
      container.innerHTML = '';
@@ -129,14 +199,45 @@ function renderHand() {
           let displayDesc = d.description;
           if (d.type === 'attack') {
                const finalDmg = d.damage + gameState.player.attackBuff;
-               const buffText = gameState.player.attackBuff > 0 ? ` (<span style="color:red">+${gameState.player.attackBuff}</span>)` : "";
-               displayDesc = `造成 ${d.damage}${buffText} 點傷害`;
+               displayDesc = `造成 ${finalDmg} 點傷害`;
           }
 
           el.innerHTML = `<strong>${d.name}</strong><small>${displayDesc}</small><b>🔋${d.cost}</b>`;
           el.onclick = () => playCardWithAnim(i, el);
           container.appendChild(el);
      });
+}
+
+function showPile(type) {
+     const modal = document.getElementById('pile-modal');
+     const list = document.getElementById('pile-list');
+     const title = document.getElementById('pile-title');
+
+     let targetCards = [];
+     if (type === 'draw') {
+          title.innerText = "抽牌堆";
+          targetCards = [...gameState.drawPile];
+     } else if (type === 'discard') {
+          title.innerText = "棄牌堆";
+          targetCards = gameState.discardPile;
+     } else {
+          title.innerText = "目前牌組";
+          targetCards = gameState.deck;
+     }
+
+     list.innerHTML = '';
+     targetCards.forEach(key => {
+          const d = CARD_LIBRARY[key];
+          const el = document.createElement('div');
+          el.className = 'card';
+          el.innerHTML = `<strong>${d.name}</strong><small>${d.description}</small><b>🔋${d.cost}</b>`;
+          list.appendChild(el);
+     });
+     modal.classList.remove('hidden');
+}
+
+function closePile() {
+     document.getElementById('pile-modal').classList.add('hidden');
 }
 
 function startPlayerTurn() {
@@ -178,106 +279,51 @@ function enemyTurn() {
           gameState.enemy.tempDebuff = 0;
 
           if (gameState.player.hp <= 0) {
-               showCentralMessage("戰敗");
+               showCentralMessage("戰敗...");
                setTimeout(() => location.reload(), 2000);
           } else {
-               setTimeout(() => { showCentralMessage("你的回合"); startPlayerTurn(); }, 600);
+               setTimeout(() => {
+                    showCentralMessage("你的回合");
+                    startPlayerTurn();
+               }, 600);
           }
      }, 400);
-}
-
-function drawCards(n) {
-     for (let i = 0; i < n; i++) {
-          if (gameState.drawPile.length === 0) {
-               if (gameState.discardPile.length === 0) break;
-               gameState.drawPile = [...gameState.discardPile];
-               gameState.discardPile = [];
-               shuffle(gameState.drawPile);
-          }
-          if (gameState.hand.length < gameState.handLimit) {
-               gameState.hand.push(gameState.drawPile.pop());
-          }
-     }
-     renderHand();
-}
-
-function playCardWithAnim(i, el) {
-     if (!gameState.isPlayerTurn) return;
-     const cardData = CARD_LIBRARY[gameState.hand[i]];
-     if (gameState.player.energy >= cardData.cost) {
-          el.classList.add('card-play');
-          setTimeout(() => executeCardEffect(i), 250);
-     } else {
-          showCentralMessage("能量不足！");
-     }
 }
 
 function nextBattle() {
      gameState.battleCount++;
      gameState.player.attackBuff = 0;
      showCentralMessage(`第 ${gameState.battleCount} 關`);
+
      const eKeys = Object.keys(ENEMY_LIBRARY);
-     spawnEnemy(eKeys[Math.floor(Math.random() * eKeys.length)]);
-     gameState.player.block = 0;
+     const randomEnemy = eKeys[Math.floor(Math.random() * eKeys.length)];
+     const d = ENEMY_LIBRARY[randomEnemy];
+
+     gameState.enemy = { ...d, hp: d.maxHp, block: 0, tempDebuff: 0 };
+     document.getElementById('enemy-name').innerText = d.name;
+     document.querySelector('#enemy .avatar').innerText = d.avatar;
+
      gameState.drawPile = [...gameState.deck];
      gameState.discardPile = [];
      gameState.hand = [];
      shuffle(gameState.drawPile);
+
      startPlayerTurn();
 }
 
-function spawnEnemy(id) {
-     const d = ENEMY_LIBRARY[id];
-     gameState.enemy = { ...d, hp: d.maxHp, block: 0, tempDebuff: 0 };
-     document.getElementById('enemy-name').innerText = d.name;
-     document.querySelector('#enemy .avatar').innerText = d.avatar;
-     updateUI();
-}
-
-function updateUI() {
-     const p = gameState.player, e = gameState.enemy;
-
-     // 更新 HP
-     document.getElementById('player-hp').style.width = (p.hp / p.maxHp * 100) + '%';
-     document.getElementById('player-hp-text').innerText = `${p.hp}/${p.maxHp}`;
-
-     // 更新護甲
-     document.getElementById('player-block').innerText = `🛡️ ${p.block}`;
-
-     // --- 新增：更新攻擊加成 UI ---
-     const buffEl = document.getElementById('player-buff');
-     if (buffEl) {
-          buffEl.innerText = `⚔️ +${p.attackBuff}`;
-          // 如果有加成，添加動畫類別，否則移除
-          if (p.attackBuff > 0) {
-               buffEl.classList.add('buff-active');
-          } else {
-               buffEl.classList.remove('buff-active');
-          }
-     }
-
-     // 更新能量
-     document.getElementById('energy-value').innerText = p.energy;
-
-     // 更新敵人資訊
-     if (e) {
-          document.getElementById('enemy-hp').style.width = (e.hp / e.maxHp * 100) + '%';
-          document.getElementById('enemy-hp-text').innerText = `${Math.floor(e.hp)}/${e.maxHp}`;
-          document.getElementById('enemy-block').innerText = `🛡️ ${e.block}`;
+function shuffle(a) {
+     for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
      }
 }
-
-function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } }
 
 function showCentralMessage(txt) {
      const el = document.getElementById('central-log');
-     el.innerText = txt; el.classList.remove('fade-in-out'); void el.offsetWidth; el.classList.add('fade-in-out');
-}
-
-function generateInitialDeck(n) {
-     const keys = ["strike", "defend", "reinforce", "abate"];
-     gameState.deck = [];
-     for (let i = 0; i < n; i++) gameState.deck.push(keys[i % keys.length]);
+     el.innerText = txt;
+     el.classList.remove('fade-in-out');
+     void el.offsetWidth;
+     el.classList.add('fade-in-out');
 }
 
 function showReward() {
@@ -301,12 +347,13 @@ function loadMockData() {
           strike: { name: "打擊", type: "attack", damage: 6, cost: 1, description: "造成 6 點傷害" },
           defend: { name: "防禦", type: "defense", block: 5, cost: 1, description: "獲得 5 點護甲" },
           reinforce: { name: "變強", type: "ability", buff: 1, cost: 2, description: "增加 1 攻" },
-          abate: { name: "虛弱", type: "utility", debuff: 4, cost: 1, description: "敵人傷害 -4" }
+          abate: { name: "虛弱", type: "utility", debuff: 4, cost: 1, description: "敵人傷害 -4" },
+          evolve: { name: "進化", type: "ability", buff: 2, cost: 2, draw: 1, description: "增加 2 攻，抽 1 張牌" }
      };
      ENEMY_LIBRARY = {
           slime: { name: "小史萊姆", maxHp: 30, avatar: "🧪", actions: [{ type: 'attack', value: 7, icon: '⚔️' }] }
      };
-     generateInitialDeck(8);
+     generateInitialDeck();
      setupEventListeners();
      nextBattle();
 }

@@ -27,7 +27,7 @@ body {
      box-shadow: 0 0 50px rgba(0,0,0,0.5);
 }
 
-/* --- 中央動畫訊息 (能量不足、進化、回合切換) --- */
+/* --- 中央動畫訊息 --- */
 #central-log {
      position: absolute;
      top: 40%;
@@ -72,7 +72,7 @@ body {
      }
 }
 
-/* --- 戰鬥舞台 (上下排列) --- */
+/* --- 戰鬥舞台 --- */
 #battle-scene {
      flex: 1;
      display: flex;
@@ -127,7 +127,7 @@ body {
      font-weight: bold;
 }
 
-/* 血條系統 */
+/* 血條與數值 */
 .hp-bar-bg {
      width: 100%;
      height: 12px;
@@ -155,61 +155,52 @@ body {
      font-weight: bold;
 }
 
-/* --- 戰鬥回饋動畫 --- */
-.unit-hurt {
-     animation: shake 0.4s ease-in-out;
-     filter: brightness(2) saturate(2) hue-rotate(-50deg);
+.buff-counter {
+     color: #ff7675;
+     font-weight: bold;
+     margin-right: 8px;
 }
 
-@keyframes shake {
-     0%, 100% {
-          transform: translateX(0);
-     }
-
-     25% {
-          transform: translateX(-12px);
-     }
-
-     50% {
-          transform: translateX(12px);
-     }
-
-     75% {
-          transform: translateX(-6px);
-     }
+.buff-active {
+     animation: buffGlow 1.5s infinite alternate;
 }
 
-.unit-attack {
-     animation: lunge 0.3s ease;
-}
-
-@keyframes lunge {
-     50% {
-          transform: scale(1.1) translateY(-15px);
+@keyframes buffGlow {
+     from {
+          opacity: 0.8;
      }
-}
 
-.damage-popup {
-     position: fixed;
-     color: #ff4757;
-     font-size: 2.5rem;
-     font-weight: 900;
-     z-index: 3000;
-     pointer-events: none;
-     animation: floatUp 0.8s ease-out forwards;
-}
-
-@keyframes floatUp {
-     0% {
+     to {
           opacity: 1;
-          transform: translateY(0);
-     }
-
-     100% {
-          opacity: 0;
-          transform: translateY(-100px);
+          transform: scale(1.1);
      }
 }
+
+/* --- 牌堆控制按鈕 --- */
+#deck-ctrl {
+     display: flex;
+     justify-content: space-around;
+     padding: 8px 10px;
+     background: rgba(0,0,0,0.6);
+     border-top: 1px solid #333;
+}
+
+.ctrl-btn {
+     background: #2c3e50;
+     color: #ecf0f1;
+     border: 1px solid #34495e;
+     padding: 6px 12px;
+     border-radius: 6px;
+     font-size: 0.75rem;
+     font-weight: bold;
+     cursor: pointer;
+     transition: all 0.2s;
+}
+
+     .ctrl-btn:active {
+          background: #34495e;
+          transform: scale(0.95);
+     }
 
 /* --- 控制 UI 與能量 --- */
 #ui-overlay {
@@ -243,14 +234,14 @@ body {
           box-shadow: none;
      }
 
-/* --- 手牌區 (可滑動) --- */
+/* --- 手牌區 --- */
 #hand-wrapper {
      height: 180px;
      overflow-x: auto;
      background: rgba(0,0,0,0.4);
      display: flex;
      align-items: center;
-     scrollbar-width: none; /* 隱藏捲軸 */
+     scrollbar-width: none;
 }
 
      #hand-wrapper::-webkit-scrollbar {
@@ -263,7 +254,7 @@ body {
      padding: 0 25px;
 }
 
-/* --- 卡牌基礎樣式 --- */
+/* --- 卡牌樣式與動畫 --- */
 .card {
      min-width: 115px;
      height: 155px;
@@ -280,119 +271,159 @@ body {
      border: 2px solid transparent;
 }
 
-/* 實時更新的 Buff 文字顏色 */
-.buff-text {
-     color: #d63031;
-     font-weight: bold;
-}
+     .card[data-type="ability"] {
+          background: #fdf0ff;
+          border: 3px solid #9b59b6;
+     }
 
-/* 能力牌 (Ability) 特殊樣式 */
-.card[data-type="ability"] {
-     background: #fdf0ff;
-     border: 3px solid #9b59b6;
-}
-
-/* 卡牌行動動畫 */
+/* 抽牌滑入 */
 .card-draw {
-     animation: cardIn 0.4s ease-out;
+     animation: cardIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) backwards;
 }
 
 @keyframes cardIn {
      from {
-          transform: translateY(120px);
+          transform: translateY(100px);
           opacity: 0;
+     }
+
+     to {
+          transform: translateY(0);
+          opacity: 1;
      }
 }
 
+/* 打出特效 (縮放消失) */
 .card-play {
      animation: cardOut 0.3s ease-in forwards;
+     pointer-events: none;
 }
 
 @keyframes cardOut {
-     to {
-          transform: translateY(-200px) scale(1.3);
+     0% {
+          transform: scale(1);
+          opacity: 1;
+     }
+
+     100% {
+          transform: scale(1.3) translateY(-30px);
           opacity: 0;
      }
 }
 
-.card strong {
-     border-bottom: 1px solid #eee;
-     padding-bottom: 5px;
-     font-size: 0.95rem;
-}
-
-.card b {
-     color: #0984e3;
-     text-align: right;
-     font-size: 1.1rem;
-}
-
-/* --- 獎勵與日誌 --- */
-#log {
-     position: absolute;
-     top: 10px;
-     left: 10px;
-     font-size: 0.7rem;
-     color: #666;
-     z-index: 10;
-}
-
-.hidden {
-     display: none !important;
-}
-
-#reward-modal {
+/* --- 牌堆檢視彈窗 --- */
+#pile-modal {
      position: absolute;
      inset: 0;
-     background: rgba(0,0,0,0.92);
-     z-index: 4000;
+     background: rgba(0,0,0,0.95);
+     z-index: 5000;
      display: flex;
      justify-content: center;
      align-items: center;
 }
 
-.reward-content {
-     text-align: center;
+.pile-content {
      width: 90%;
+     height: 85%;
+     display: flex;
+     flex-direction: column;
      color: white;
 }
 
-#reward-options {
-     display: flex;
-     flex-direction: column;
+#pile-list {
+     flex: 1;
+     overflow-y: auto;
+     display: grid;
+     grid-template-columns: repeat(2, 1fr);
      gap: 15px;
-     align-items: center;
-     margin: 30px 0;
+     padding: 15px;
+     background: rgba(255,255,255,0.05);
+     border-radius: 10px;
 }
 
-     /* 獎勵中的卡片橫向排列或放大 */
-     #reward-options .card {
-          flex-direction: row;
-          width: 90%;
-          height: 80px;
-          min-height: 80px;
-          align-items: center;
+     #pile-list .card {
+          min-width: unset;
+          height: 130px;
+          font-size: 0.75rem;
+          color: #333;
      }
 
-.buff-counter {
-     color: #ff7675; /* 淺紅色 */
+.close-btn {
+     margin: 20px auto;
+     padding: 10px 40px;
+     background: #e74c3c;
+     color: white;
+     border: none;
+     border-radius: 8px;
      font-weight: bold;
-     margin-right: 8px;
-     text-shadow: 0 0 5px rgba(255, 118, 117, 0.3);
+     cursor: pointer;
 }
 
-/* 當數值大於 0 時可以加個呼吸燈動畫（選配） */
-.buff-active {
-     animation: buffGlow 1.5s infinite alternate;
+/* --- 戰鬥動作特效 --- */
+
+/* 受傷震動 */
+.unit-hurt {
+     animation: shake 0.4s ease-in-out;
+     filter: brightness(2) saturate(2);
 }
 
-@keyframes buffGlow {
-     from {
-          opacity: 0.8;
+@keyframes shake {
+     0%, 100% {
+          transform: translateX(0);
      }
 
-     to {
+     25% {
+          transform: translateX(-12px);
+     }
+
+     50% {
+          transform: translateX(12px);
+     }
+
+     75% {
+          transform: translateX(-6px);
+     }
+}
+
+/* 敵人攻擊衝撞 */
+.unit-attack {
+     animation: attackMove 0.4s ease-in-out;
+}
+
+@keyframes attackMove {
+     0%, 100% {
+          transform: translateX(0);
+     }
+
+     50% {
+          transform: translateX(-40px);
+     }
+}
+
+/* 數字彈出 */
+.damage-popup {
+     position: fixed;
+     color: #ff7675;
+     font-weight: 900;
+     font-size: 1.5rem;
+     pointer-events: none;
+     z-index: 3000;
+     animation: floatUp 0.8s ease-out forwards;
+     text-shadow: 0 0 5px rgba(0,0,0,0.8);
+}
+
+@keyframes floatUp {
+     0% {
+          transform: translateY(0);
           opacity: 1;
-          transform: scale(1.1);
      }
+
+     100% {
+          transform: translateY(-50px);
+          opacity: 0;
+     }
+}
+
+.hidden {
+     display: none !important;
 }

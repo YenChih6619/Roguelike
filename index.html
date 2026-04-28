@@ -10,6 +10,7 @@
      <div id="game-container">
           <div id="log">初始化中...</div>
           <div id="central-log"></div>
+
           <div id="battle-scene">
                <div class="unit" id="enemy">
                     <div class="unit-info">
@@ -25,6 +26,7 @@
                          </div>
                     </div>
                </div>
+
                <div class="unit" id="player">
                     <div class="avatar">🧙‍♂️</div>
                     <div class="stats">
@@ -37,11 +39,22 @@
                     </div>
                </div>
           </div>
+
+          <div id="deck-ctrl">
+               <button class="ctrl-btn" onclick="showPile('draw')">抽牌堆：<span id="draw-count">0</span></button>
+               <button class="ctrl-btn" onclick="showPile('deck')">查看全部牌組</button>
+               <button class="ctrl-btn" onclick="showPile('discard')">棄牌堆：<span id="discard-count">0</span></button>
+          </div>
+
           <div id="ui-overlay">
                <div id="energy-display">🔋 <span id="energy-value">3</span> / 3</div>
                <button id="end-turn-btn">結束回合</button>
           </div>
-          <div id="hand-wrapper"><div id="hand"></div></div>
+
+          <div id="hand-wrapper">
+               <div id="hand"></div>
+          </div>
+
           <div id="reward-modal" class="hidden">
                <div class="reward-content">
                     <h3>戰鬥勝利！選一張卡</h3>
@@ -49,7 +62,16 @@
                     <button id="skip-reward-btn">跳過</button>
                </div>
           </div>
+
+          <div id="pile-modal" class="hidden">
+               <div class="pile-content">
+                    <h3 id="pile-title">牌堆內容</h3>
+                    <div id="pile-list"></div>
+                    <button onclick="closePile()" class="close-btn">關閉檢視</button>
+               </div>
+          </div>
      </div>
+
      <script src="game.js"></script>
 </body>
 </html>
