@@ -1,5 +1,4 @@
-﻿/* --- 基礎設定 --- */
-* {
+﻿* {
      box-sizing: border-box;
      -webkit-tap-highlight-color: transparent;
 }
@@ -7,38 +6,37 @@
 body {
      background-color: #0b0e14;
      color: #e0e0e0;
-     font-family: sans-serif;
      margin: 0;
      height: 100vh;
      display: flex;
      justify-content: center;
      overflow: hidden;
+     font-family: sans-serif;
 }
 
 #game-container {
      width: 100%;
-     max-width: 500px; /* 模擬手機寬度 */
+     max-width: 500px;
      height: 100vh;
-     background: #1a1c2c;
+     background: radial-gradient(circle at center, #1a1c2c 0%, #0d0e14 100%);
      position: relative;
      display: flex;
      flex-direction: column;
 }
 
-/* --- 中央訊息 --- */
+/* --- 動畫訊息 --- */
 #central-log {
      position: absolute;
      top: 40%;
      left: 50%;
      transform: translate(-50%, -50%);
      font-size: 2.5rem;
-     font-weight: bold;
+     font-weight: 900;
      color: #f1c40f;
-     text-shadow: 0 0 10px #000;
+     text-shadow: 0 0 15px rgba(0,0,0,0.8);
      z-index: 2000;
      pointer-events: none;
      opacity: 0;
-     white-space: nowrap;
 }
 
 .fade-in-out {
@@ -49,11 +47,13 @@ body {
      0% {
           opacity: 0;
           transform: translate(-50%, -40%) scale(0.8);
+          filter: blur(10px);
      }
 
      20% {
           opacity: 1;
           transform: translate(-50%, -50%) scale(1.1);
+          filter: blur(0px);
      }
 
      80% {
@@ -64,38 +64,41 @@ body {
      100% {
           opacity: 0;
           transform: translate(-50%, -60%) scale(1.2);
+          filter: blur(5px);
      }
 }
 
-/* --- 戰鬥舞台 (上下排列) --- */
+/* --- 戰鬥舞台 --- */
 #battle-scene {
      flex: 1;
      display: flex;
      flex-direction: column;
-     justify-content: space-between;
-     padding: 10px;
+     justify-content: space-around;
+     padding: 15px;
 }
 
 .unit {
      background: rgba(255,255,255,0.05);
-     border-radius: 15px;
-     padding: 10px;
+     border-radius: 20px;
+     padding: 15px;
      display: flex;
      align-items: center;
      gap: 15px;
+     transition: 0.3s;
 }
 
 #enemy {
      flex-direction: row-reverse;
-     border-left: 4px solid #e74c3c;
+     border-right: 5px solid #e74c3c;
 }
 
 #player {
-     border-left: 4px solid #2ecc71;
+     border-left: 5px solid #2ecc71;
 }
 
 .avatar {
-     font-size: 50px;
+     font-size: 60px;
+     filter: drop-shadow(0 5px 10px #000);
 }
 
 .stats {
@@ -105,28 +108,29 @@ body {
 .unit-name {
      font-weight: bold;
      color: #f1c40f;
-     font-size: 0.9rem;
+     margin-bottom: 5px;
 }
 
 .intent {
-     font-size: 0.8rem;
+     font-size: 0.9rem;
      color: #ff7675;
+     font-weight: bold;
 }
 
 .hp-bar-bg {
      width: 100%;
-     height: 10px;
-     background: #333;
-     border-radius: 5px;
-     margin: 5px 0;
+     height: 12px;
+     background: #222;
+     border-radius: 6px;
      overflow: hidden;
+     margin: 8px 0;
 }
 
 .hp-bar-fill {
      width: 100%;
      height: 100%;
      background: #e74c3c;
-     transition: width 0.5s;
+     transition: width 0.5s ease;
 }
 
 #player .hp-bar-fill {
@@ -136,38 +140,94 @@ body {
 .stats-row {
      display: flex;
      justify-content: space-between;
-     font-size: 0.8rem;
+     font-size: 0.85rem;
      font-weight: bold;
 }
 
-/* --- UI 與能量 --- */
+/* --- 戰鬥回饋動畫 --- */
+.unit-hurt {
+     animation: shake 0.4s ease-in-out;
+     filter: brightness(2) saturate(2) hue-rotate(-50deg);
+}
+
+@keyframes shake {
+     0%, 100% {
+          transform: translateX(0);
+     }
+
+     25% {
+          transform: translateX(-12px);
+     }
+
+     50% {
+          transform: translateX(12px);
+     }
+
+     75% {
+          transform: translateX(-6px);
+     }
+}
+
+.unit-attack {
+     animation: lunge 0.3s ease;
+}
+
+@keyframes lunge {
+     50% {
+          transform: scale(1.1) translateY(-10px);
+     }
+}
+
+.damage-popup {
+     position: fixed;
+     color: #ff4757;
+     font-size: 2.5rem;
+     font-weight: 900;
+     z-index: 3000;
+     pointer-events: none;
+     animation: floatUp 0.8s ease-out forwards;
+}
+
+@keyframes floatUp {
+     0% {
+          opacity: 1;
+          transform: translateY(0);
+     }
+
+     100% {
+          opacity: 0;
+          transform: translateY(-80px);
+     }
+}
+
+/* --- 手牌與 UI --- */
 #ui-overlay {
-     height: 50px;
+     height: 60px;
      background: #000;
      display: flex;
      justify-content: space-between;
      align-items: center;
-     padding: 0 20px;
+     padding: 0 25px;
 }
 
 #energy-display {
-     font-size: 1.2rem;
+     font-size: 1.3rem;
      color: #00d2ff;
+     font-weight: bold;
 }
 
 #end-turn-btn {
      background: #e67e22;
      border: none;
      color: white;
-     padding: 5px 15px;
-     border-radius: 5px;
+     padding: 8px 20px;
+     border-radius: 8px;
      font-weight: bold;
 }
 
-/* --- 手牌區 (橫向滑動優化) --- */
 #hand-wrapper {
-     height: 160px;
-     overflow-x: auto; /* 允許橫向滑動 */
+     height: 180px;
+     overflow-x: auto;
      background: rgba(0,0,0,0.3);
      display: flex;
      align-items: center;
@@ -175,44 +235,83 @@ body {
 
 #hand {
      display: flex;
-     gap: 10px;
+     gap: 12px;
      padding: 0 20px;
 }
 
 .card {
-     min-width: 100px;
-     height: 140px;
-     background: white;
+     min-width: 110px;
+     height: 150px;
+     background: #fff;
      color: #333;
-     border-radius: 8px;
-     padding: 8px;
+     border-radius: 12px;
+     padding: 10px;
      display: flex;
      flex-direction: column;
      justify-content: space-between;
-     font-size: 0.8rem;
-     box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+     box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+     font-size: 0.85rem;
+     position: relative;
 }
 
-     .card strong {
-          border-bottom: 1px solid #eee;
-          display: block;
-          margin-bottom: 4px;
+.card-draw {
+     animation: cardIn 0.4s ease-out;
+}
+
+@keyframes cardIn {
+     from {
+          transform: translateY(100px);
+          opacity: 0;
      }
 
-     .card b {
-          color: #0984e3;
-          text-align: right;
+     to {
+          transform: translateY(0);
+          opacity: 1;
      }
+}
 
-/* --- 獎勵視窗 --- */
+.card-play {
+     animation: cardOut 0.3s ease-in forwards;
+}
+
+@keyframes cardOut {
+     to {
+          transform: translateY(-150px) scale(1.2);
+          opacity: 0;
+     }
+}
+
+.card strong {
+     border-bottom: 1px solid #ddd;
+     padding-bottom: 5px;
+     font-size: 0.9rem;
+}
+
+.card b {
+     color: #0984e3;
+     text-align: right;
+     font-size: 1.1rem;
+}
+
+#log {
+     position: absolute;
+     top: 10px;
+     left: 10px;
+     font-size: 0.75rem;
+     color: #777;
+     z-index: 10;
+}
+
+.hidden {
+     display: none !important;
+}
+
+/* 獎勵彈窗 */
 #reward-modal {
      position: absolute;
-     top: 0;
-     left: 0;
-     width: 100%;
-     height: 100%;
-     background: rgba(0,0,0,0.95);
-     z-index: 3000;
+     inset: 0;
+     background: rgba(0,0,0,0.9);
+     z-index: 4000;
      display: flex;
      justify-content: center;
      align-items: center;
@@ -232,21 +331,8 @@ body {
 }
 
      #reward-options .card {
-          width: 80%;
-          min-height: 80px;
           flex-direction: row;
+          width: 90%;
+          min-height: 70px;
           align-items: center;
      }
-
-#log {
-     position: absolute;
-     top: 5px;
-     left: 5px;
-     font-size: 0.7rem;
-     color: #888;
-     z-index: 10;
-}
-
-.hidden {
-     display: none !important;
-}
