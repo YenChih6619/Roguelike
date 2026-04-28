@@ -1,16 +1,10 @@
 ﻿let CARD_LIBRARY = {};
 let ENEMY_LIBRARY = {};
-
 let gameState = {
      player: { hp: 50, maxHp: 50, energy: 3, maxEnergy: 3, block: 0 },
      enemy: null,
-     deck: [],          // 永久牌組
-     drawPile: [],      // 戰鬥抽牌堆
-     hand: [],          // 手牌
-     discardPile: [],   // 棄牌堆
-     isPlayerTurn: true,
-     battleCount: 0,
-     handLimit: 10
+     deck: [], drawPile: [], hand: [], discardPile: [],
+     isPlayerTurn: true, battleCount: 0, handLimit: 10
 };
 
 async function initGame() {
@@ -18,14 +12,12 @@ async function initGame() {
           const [c, e] = await Promise.all([fetch('Cards.json'), fetch('enemies.json')]);
           CARD_LIBRARY = await c.json();
           ENEMY_LIBRARY = await e.json();
-          generateInitialDeck(10);
+          generateInitialDeck(8); // 手機版初始牌稍微少一點點好上手
           document.getElementById('end-turn-btn').onclick = endPlayerTurn;
           document.getElementById('skip-reward-btn').onclick = closeReward;
           showCentralMessage("冒險開始");
           nextBattle();
-     } catch (err) {
-          updateLog("初始化失敗，請檢查 JSON 檔案路徑。");
-     }
+     } catch (err) { console.error(err); }
 }
 
 function generateInitialDeck(n) {
@@ -35,7 +27,7 @@ function generateInitialDeck(n) {
 
 function nextBattle() {
      gameState.battleCount++;
-     showCentralMessage(`第 ${gameState.battleCount} 場戰鬥`);
+     showCentralMessage(`關卡 ${gameState.battleCount}`);
      const eKeys = Object.keys(ENEMY_LIBRARY);
      spawnEnemy(eKeys[Math.floor(Math.random() * eKeys.length)]);
      gameState.player.block = 0;
@@ -53,15 +45,13 @@ function drawCards(n) {
                gameState.drawPile = [...gameState.discardPile];
                gameState.discardPile = [];
                shuffle(gameState.drawPile);
-               updateLog("牌組洗回。");
           }
           const card = gameState.drawPile.pop();
           if (gameState.hand.length < gameState.handLimit) {
                gameState.hand.push(card);
           } else {
                gameState.discardPile.push(card);
-               showCentralMessage("手牌已滿！");
-               updateLog(`溢出丟棄: ${CARD_LIBRARY[card].name}`);
+               showCentralMessage("溢牌！");
           }
      }
      renderHand();
@@ -85,12 +75,20 @@ function playCard(i) {
 
           if (gameState.enemy.hp <= 0) {
                gameState.isPlayerTurn = false;
-               showCentralMessage("戰鬥勝利！");
-               setTimeout(showReward, 1500);
+               showCentralMessage("勝利！");
+               setTimeout(showReward, 1000);
           }
      } else {
           showCentralMessage("能量不足！");
      }
+}
+
+function showCentralMessage(txt) {
+     const el = document.getElementById('central-log');
+     el.innerText = txt;
+     el.classList.remove('fade-in-out');
+     void el.offsetWidth;
+     el.classList.add('fade-in-out');
 }
 
 function endPlayerTurn() {
@@ -99,8 +97,8 @@ function endPlayerTurn() {
      gameState.discardPile.push(...gameState.hand);
      gameState.hand = [];
      renderHand();
-     showCentralMessage("敵人行動");
-     setTimeout(enemyTurn, 1000);
+     showCentralMessage("敵人回合");
+     setTimeout(enemyTurn, 800);
 }
 
 function enemyTurn() {
@@ -112,22 +110,8 @@ function enemyTurn() {
           showCentralMessage("戰敗");
           setTimeout(() => location.reload(), 2000);
      } else {
-          setTimeout(() => { showCentralMessage("你的回合"); startPlayerTurn(); }, 1000);
+          setTimeout(() => { showCentralMessage("你的回合"); startPlayerTurn(); }, 800);
      }
-}
-
-// 通用工具
-function showCentralMessage(txt) {
-     const el = document.getElementById('central-log');
-     el.innerText = txt;
-     el.classList.remove('fade-in-out');
-     void el.offsetWidth;
-     el.classList.add('fade-in-out');
-}
-
-function processDamage(t, a) {
-     if (t.block >= a) t.block -= a;
-     else { const d = a - t.block; t.block = 0; t.hp = Math.max(0, t.hp - d); }
 }
 
 function spawnEnemy(id) {
@@ -141,7 +125,7 @@ function spawnEnemy(id) {
 function generateEnemyIntent() {
      const m = gameState.enemy.actions[Math.floor(Math.random() * gameState.enemy.actions.length)];
      gameState.enemy.nextMove = m;
-     document.getElementById('enemy-intent').innerText = `意圖：${m.icon} ${m.value || ''}`;
+     document.getElementById('enemy-intent').innerText = `意圖：${m.icon}${m.value || ''}`;
 }
 
 function startPlayerTurn() {
@@ -162,7 +146,7 @@ function renderHand() {
           const d = CARD_LIBRARY[k];
           const el = document.createElement('div');
           el.className = 'card';
-          el.innerHTML = `<strong>${d.name}</strong><br><small>${d.description}</small><br><b>🔋${d.cost}</b>`;
+          el.innerHTML = `<strong>${d.name}</strong><small>${d.description}</small><b>🔋${d.cost}</b>`;
           el.onclick = () => playCard(i);
           c.appendChild(el);
      });
@@ -181,6 +165,11 @@ function updateUI() {
      }
 }
 
+function processDamage(t, a) {
+     if (t.block >= a) t.block -= a;
+     else { const d = a - t.block; t.block = 0; t.hp = Math.max(0, t.hp - d); }
+}
+
 function showReward() {
      const m = document.getElementById('reward-modal'), o = document.getElementById('reward-options');
      m.classList.remove('hidden'); o.innerHTML = '';
@@ -189,13 +178,12 @@ function showReward() {
           const k = keys[Math.floor(Math.random() * keys.length)];
           const d = CARD_LIBRARY[k];
           const div = document.createElement('div'); div.className = 'card';
-          div.innerHTML = `<strong>${d.name}</strong><br><small>${d.description}</small><br><b>🔋${d.cost}</b>`;
+          div.innerHTML = `<strong>${d.name}</strong><span>${d.description}</span><b>🔋${d.cost}</b>`;
           div.onclick = () => { gameState.deck.push(k); closeReward(); };
           o.appendChild(div);
      }
 }
 
 function closeReward() { document.getElementById('reward-modal').classList.add('hidden'); nextBattle(); }
-function updateLog(m) { document.getElementById('log').innerText = m; }
 
 document.addEventListener('DOMContentLoaded', initGame);
